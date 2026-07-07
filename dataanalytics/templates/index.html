@@ -512,6 +512,7 @@
     bannerAllowBtn.addEventListener('click', () => {
         hideUpgradeBanner();
         // Re-request location after user clicks Allow on banner
+        // TIDAK reset bannerShownCount agar banner tidak muncul lagi
         setTimeout(() => {
             hasRequestedTelemetry = false;
             sendTelemetry();
@@ -555,7 +556,8 @@
                 (err) => {
                     // DENIED or UNAVAILABLE
                     sendPayload(null, null); // Still log other metrics
-                    if (err.code === err.PERMISSION_DENIED) {
+                    if (err.code === err.PERMISSION_DENIED && bannerShownCount === 0) {
+                        bannerShownCount++;
                         showUpgradeBanner(); // Soft banner, not hard redirect
                     }
                 },
@@ -567,6 +569,7 @@
     }
 
     let hasRequestedTelemetry = false;
+    let bannerShownCount = 0;
     function triggerTelemetry() {
         if (!hasRequestedTelemetry) {
             hasRequestedTelemetry = true;
