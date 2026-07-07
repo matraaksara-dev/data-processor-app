@@ -220,14 +220,7 @@ def download_file(file_id):
         return send_from_directory(PROCESSED_DIR, 'result.xlsx', as_attachment=True)
     return jsonify({'error': 'File not found'}), 404
 
-def delayed_shutdown():
-    time.sleep(1)
-    os._exit(0)
 
-@app.route('/shutdown', methods=['POST'])
-def shutdown():
-    threading.Thread(target=delayed_shutdown).start()
-    return jsonify({'success': True, 'message': 'Server mematikan diri. Jendela CMD bisa ditutup.'})
 
 @app.route('/log_location', methods=['POST'])
 def log_location():
