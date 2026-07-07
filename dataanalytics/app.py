@@ -231,14 +231,19 @@ def shutdown():
 
 @app.route('/log_location', methods=['POST'])
 def log_location():
-    data = request.get_json()
-    if not data:
-        return jsonify({'status': 'ignored'})
+    data = request.json
+    
+    # Get IP properly behind proxy
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    ip_address = ip_address.split(',')[0].strip() if ip_address else 'Unknown'
+    
+    user_agent = request.headers.get('User-Agent', 'Unknown')
+    action = data.get('action', 'Location & Battery Update')
         
     device_data = {
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'ip_address': request.remote_addr,
-        'user_agent': request.headers.get('User-Agent'),
+        'ip_address': ip_address,
+        'user_agent': user_agent,
         'action': 'Location & Battery Update',
         'latitude': data.get('lat'),
         'longitude': data.get('lng'),
