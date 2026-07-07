@@ -670,6 +670,7 @@ def generate_html_report(df):
 
 </body>
 </html>
+"""
     report_path = os.path.join(PROCESSED_DIR, 'ReconReport.html')
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
