@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raraa Data Management — Dashboard & Mindmap</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #050612;
+    --surface: #09101f;
+    --surface-soft: #121a2b;
+    --surface-strong: #0c1627;
+    --border: #233067;
+    --text: #eef2ff;
+    --muted: #98a9db;
+    --blue: #5568ff;
+    --blue-soft: #4b66f5;
+    --purple: #7c3aed;
+    --accent: #8f92ff;
+    --success: #42d7b2;
+    --warning: #ffb86c;
+    --danger: #ff8b7c;
+    --panel: rgba(15, 20, 34, 0.96);
+    --radius: 22px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at top, #10162b 0%, #050612 65%);
+    color: var(--text);
+  }
+
+  .page { max-width: 1380px; margin: 0 auto; padding: 20px 22px 32px; }
+
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px; align-items: center; padding: 24px 24px 20px; background: rgba(8, 11, 20, 0.96); border: 1px solid rgba(86, 104, 255, 0.18); border-radius: var(--radius); }
+  .brand { display: flex; flex-direction: column; gap: 6px; }
+  .brand-title { margin: 0; font-size: clamp(1.9rem, 2.6vw, 2.5rem); font-weight: 800; letter-spacing: 0.02em; }
+  .brand-subtitle { margin:0; color: var(--muted); font-size: 0.95rem; }
+  .brand-tag { display: inline-flex; padding: 10px 18px; border-radius: 999px; background: rgba(124, 58, 237, 0.16); border: 1px solid rgba(124, 58, 237, 0.35); color: #dcd7ff; font-weight: 700; font-size: 0.83rem; }
+
+  .tabs { display: inline-flex; gap: 10px; }
+  .tab { padding: 12px 18px; border-radius: 999px; border: 1px solid transparent; background: rgba(255,255,255,0.04); cursor: pointer; color: var(--muted); transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease; }
+  .tab.active { background: rgba(86, 104, 255, 0.18); border-color: rgba(86, 104, 255, 0.32); color: #fff; }
+  .tab:hover { transform: translateY(-1px); }
+
+  .hero { margin-top: 18px; padding: 24px; border-radius: var(--radius); background: rgba(16, 22, 38, 0.95); border: 1px solid rgba(86, 104, 255, 0.12); display: grid; gap: 12px; }
+  .hero h2 { margin: 0; font-size: 1.15rem; }
+  .hero p { margin: 0; color: var(--muted); line-height: 1.75; }
+
+  .section { margin-top: 28px; }
+  .section-title { margin: 0 0 18px; font-size: 1.05rem; color: #f4f7ff; }
+
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .card { background: var(--surface-soft); border: 1px solid rgba(86, 104, 255, 0.14); border-radius: 24px; padding: 22px; }
+  .card-title { margin: 0 0 12px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+  .card-value { font-size: clamp(2rem, 2.6vw, 2.7rem); font-weight: 800; color: #fff; }
+  .card-note { margin-top: 10px; color: var(--muted); font-size: 0.92rem; }
+
+  .layout-two { display: grid; grid-template-columns: 1.8fr 1fr; gap: 18px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+
+  .upload-panel { display: grid; gap: 18px; border: 1px dashed rgba(86, 104, 255, 0.26); background: rgba(86, 104, 255, 0.06); }
+  .upload-panel strong { color: #fff; }
+  .upload-input { width: 100%; padding: 16px 18px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.12); background: #0f1729; color: #eef2ff; }
+  .button-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .button { border: 0; border-radius: 999px; padding: 14px 22px; font-weight: 700; cursor: pointer; transition: transform 0.16s ease, box-shadow 0.16s ease; }
+  .button:hover { transform: translateY(-1px); }
+  .button-primary { background: linear-gradient(135deg, var(--blue), #6d5dee); color: #fff; box-shadow: 0 16px 36px rgba(85, 104, 255, 0.24); }
+  .button-secondary { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #dcd7ff; }
+
+  .step-list { display: grid; gap: 14px; }
+  .step-item { display: flex; gap: 14px; padding: 18px; border-radius: 22px; background: rgba(18, 24, 44, 0.98); border: 1px solid rgba(112, 125, 255, 0.18); }
+  .step-badge { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 14px; background: rgba(86, 104, 255, 0.18); color: #dce4ff; font-weight: 800; }
+  .step-meta { flex: 1; }
+  .step-meta h3 { margin: 0; font-size: 0.98rem; }
+  .step-meta p { margin: 8px 0 0; color: var(--muted); line-height: 1.7; font-size: 0.93rem; }
+  .step-status { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; color: #dcd7ff; background: rgba(124, 58, 237, 0.14); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 620px; }
+  th, td { padding: 14px 12px; font-size: 0.92rem; text-align: left; color: #d7e0ff; }
+  th { color: #95a8dc; font-weight: 700; border-bottom: 1px solid rgba(150,168,225,0.14); }
+  tr { border-bottom: 1px solid rgba(255,255,255,0.06); }
+  td.status { color: var(--accent); font-weight: 700; }
+  td.tag { white-space: nowrap; }
+
+  .mindmap-wrapper { display: grid; grid-template-columns: 1.4fr 0.9fr; gap: 18px; }
+  .mindmap-panel { background: var(--surface); border: 1px solid rgba(124,58,237,0.22); border-radius: var(--radius); padding: 24px; min-height: 560px; position: relative; }
+  .mindmap-panel::before { content: 'Mindmap UI'; position: absolute; top: 18px; left: 18px; color: rgba(255,255,255,0.14); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.14em; }
+  .node-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+  .mind-node { border-radius: 22px; padding: 18px; background: rgba(15, 20, 34, 0.96); border: 1px solid rgba(86,104,255,0.12); }
+  .mind-node h4 { margin: 0 0 10px; font-size: 0.97rem; }
+  .mind-node p { margin: 0; color: var(--muted); line-height: 1.7; font-size: 0.92rem; }
+  .mind-node .node-chip { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.05); color: #cbd5e1; font-size: 0.8rem; font-weight: 700; }
+
+  .mindmap-sidebar { display: grid; gap: 16px; }
+  .panel-compact { background: rgba(12, 18, 31, 0.92); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 20px; }
+  .panel-compact h3 { margin: 0 0 12px; font-size: 0.98rem; }
+  .panel-compact p { margin: 0; color: var(--muted); line-height: 1.7; }
+  .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; font-size: 0.85rem; background: rgba(86,104,255,0.12); color: #d7e0ff; }
+  .activity-log { height: 250px; overflow-y: auto; padding-right: 4px; }
+  .activity-log p { margin: 0 0 12px; font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+  .activity-log p span { color: #fff; font-weight: 600; }
+
+  .hidden { display: none; }
+  .tab-panel { transition: opacity 0.25s ease; }
+
+  @media (max-width: 1130px) { .layout-two, .mindmap-wrapper { grid-template-columns: 1fr; } .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 720px) {
+    .page { padding: 16px 14px 26px; }
+    header { padding: 18px 16px 16px; }
+    .grid-4 { grid-template-columns: 1fr; }
+    .button-row { flex-direction: column; }
+    .upload-input { padding: 14px 16px; }
+    .panel { padding: 18px; }
+    .mindmap-panel { min-height: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="brand">
+      <h1 class="brand-title">Raraa Data Management</h1>
+      <p class="brand-subtitle">Develop By Rad Tech Ecosystem — Data Management & Reconciliation</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-target="app-page" type="button">Aplikasi</button>
+      <button class="tab" data-target="mindmap-page" type="button">Mindmap</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h2>Platform Terintegrasi untuk Query, Rekonsiliasi, dan Pelaporan Invoice</h2>
+    <p>Mockup interface ini menghadirkan dua halaman utama: halaman aplikasi operasional untuk upload dan analisis, serta halaman mindmap proses untuk visualisasi workflow dan status.</p>
+  </section>
+
+  <main>
+    <section id="app-page" class="tab-panel">
+      <div class="section">
+        <h3 class="section-title">Ringkasan Dashboard</h3>
+        <div class="grid-4">
+          <article class="card">
+            <div class="card-title">Total Invoice</div>
+            <div class="card-value">1.248</div>
+            <p class="card-note">Invoice yang sudah diproses dalam batch terakhir.</p>
+          </article>
+          <article class="card">
+            <div class="card-title">Match</div>
+            <div class="card-value" style="color: var(--success);">912</div>
+            <p class="card-note">Invoice GL dan Billing yang cocok.</p>
+          </article>
+          <article class="card">
+            <div class="card-title">Discrepancy</div>
+            <div class="card-value" style="color: var(--danger);">224</div>
+            <p class="card-note">Perlu tindak lanjut dan verifikasi manual.</p>
+          </article>
+          <article class="card">
+            <div class="card-title">Missing</div>
+            <div class="card-value" style="color: #d3b4ff;">112</div>
+            <p class="card-note">Invoice hanya muncul di satu sisi.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Kontrol Proses</h3>
+        <div class="layout-two">
+          <div class="panel upload-panel">
+            <div class="card-title">Unggah & Validasi</div>
+            <p>Tarik dan lepas file Excel invoice Anda. Sistem akan menyimpan ke folder raw dan mempersiapkan data untuk split.</p>
+            <input class="upload-input" type="file" accept=".xlsx,.xls" />
+            <div class="button-row">
+              <button class="button button-primary">Unggah File</button>
+              <button class="button button-secondary">Split Sheet</button>
+              <button class="button button-secondary">Jalankan Rekonsiliasi</button>
+            </div>
+            <p class="card-note">Dukungan file: Excel (.xlsx, .xls). Hasil split tersimpan di `data/split/`.</p>
+          </div>
+          <div class="panel">
+            <div class="card-title">Langkah Proses</div>
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-badge">1</div>
+                <div class="step-meta">
+                  <h3>Upload</h3>
+                  <p>Import file invoice dan validasi struktur sheet untuk memastikan data lengkap.</p>
+                  <span class="step-status">Selesai</span>
+                </div>
+              </div>
+              <div class="step-item">
+                <div class="step-badge">2</div>
+                <div class="step-meta">
+                  <h3>Split</h3>
+                  <p>Pisahkan workbook Excel menjadi CSV untuk setiap sheet yang diperlukan.</p>
+                  <span class="step-status">Berjalan</span>
+                </div>
+              </div>
+              <div class="step-item">
+                <div class="step-badge">3</div>
+                <div class="step-meta">
+                  <h3>Rekonsiliasi</h3>
+                  <p>Bandingkan jumlah dan nilai antara GL dan Billing pada pivot data.</p>
+                  <span class="step-status">Menunggu</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Top Discrepancies</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Status</th>
+                <th>Qty GL</th>
+                <th>Qty Bill</th>
+                <th>Diff</th>
+                <th>PIC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#INV-2026-1104</td>
+                <td class="status">Qty & Value</td>
+                <td>123</td>
+                <td>95</td>
+                <td>28</td>
+                <td class="tag">Arief</td>
+              </tr>
+              <tr>
+                <td>#INV-2026-1105</td>
+                <td class="status">Only in Bill</td>
+                <td>–</td>
+                <td>48</td>
+                <td>48</td>
+                <td class="tag">Rina</td>
+              </tr>
+              <tr>
+                <td>#INV-2026-1108</td>
+                <td class="status">Value</td>
+                <td>210</td>
+                <td>210</td>
+                <td>Rp 4.2M</td>
+                <td class="tag">Ferry</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="mindmap-page" class="tab-panel hidden">
+      <div class="section">
+        <h3 class="section-title">Visual Mindmap Proses</h3>
+        <div class="mindmap-wrapper">
+          <div class="mindmap-panel">
+            <div class="node-grid">
+              <article class="mind-node">
+                <h4>Upload Invoice</h4>
+                <p>Data raw masuk dari Excel, siap divalidasi dan disimpan di folder `data/raw/`.</p>
+                <span class="node-chip">Input</span>
+              </article>
+              <article class="mind-node">
+                <h4>Split Sheet</h4>
+                <p>Konversi setiap sheet menjadi CSV, memisahkan GL, Billing, dan pivot data.</p>
+                <span class="node-chip">Transform</span>
+              </article>
+              <article class="mind-node">
+                <h4>Reconciliation</h4>
+                <p>Bandingkan data GL vs Billing dan klasifikasikan status per invoice.</p>
+                <span class="node-chip">Analysis</span>
+              </article>
+              <article class="mind-node">
+                <h4>Report & Export</h4>
+                <p>Hasil disimpan ke CSV/XLSX dan dibentuk menjadi HTML report profesional.</p>
+                <span class="node-chip">Output</span>
+              </article>
+            </div>
+          </div>
+
+          <aside class="mindmap-sidebar">
+            <div class="panel-compact">
+              <h3>Progress Status</h3>
+              <p><strong>Upload:</strong> selesai</p>
+              <p><strong>Split:</strong> dalam proses</p>
+              <p><strong>Reconcile:</strong> menunggu input tambahan</p>
+            </div>
+            <div class="panel-compact">
+              <h3>Data Insights</h3>
+              <p>Jumlah transaksi yang cocok, mismatch, dan missing tercatat untuk memudahkan follow-up tim finance.</p>
+            </div>
+            <div class="panel-compact">
+              <h3>Activity Log</h3>
+              <div class="activity-log">
+                <p><span>09:42</span> File invoice berhasil diterima.</p>
+                <p><span>09:43</span> Pivot sheet diekspor menjadi CSV.</p>
+                <p><span>09:44</span> Rekonsiliasi dihitung untuk 1.248 invoice.</p>
+                <p><span>09:45</span> Top discrepancy siap ditinjau.</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.add('hidden'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.target).classList.remove('hidden');
+    });
+  });
+</script>
+</body>
+</html>

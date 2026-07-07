@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Excel raw files (large binary, don't commit)
+dataanalytics/ZV64 IMT 2024 new.XLSX
+dataanalytics/.~lock.*
+dataanalytics/data/
+dataanalytics/scratch/
+dataanalytics/split_csvs/
+
+# JSON telemetry data (local only)
+dataanalytics/db_json/
+db_json/
+
+# Bat file (local only)
+run_rad.bat
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

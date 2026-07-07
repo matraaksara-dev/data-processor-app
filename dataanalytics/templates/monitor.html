@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAD Monitor — Telemetry Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0f1e;
+            --surface: #111827;
+            --card: #1a2332;
+            --border: #1f2f44;
+            --accent: #10b981;
+            --accent-dim: rgba(16,185,129,0.08);
+            --blue: #3b82f6;
+            --yellow: #f59e0b;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --muted2: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ─── TOP BAR ─────────────────────────────────── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .live-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+            70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .topbar-meta {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+        .topbar-meta span { color: var(--accent); }
+
+        /* ─── STATS ROW ────────────────────────────────── */
+        .stats-row {
+            display: flex;
+            gap: 1px;
+            background: var(--border);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .stat-box {
+            flex: 1;
+            padding: 14px 20px;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .stat-val {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .stat-val.green { color: var(--accent); }
+        .stat-val.blue  { color: var(--blue); }
+        .stat-val.yellow { color: var(--yellow); font-size: 1rem; margin-top: 4px; }
+
+        /* ─── MAIN LAYOUT ──────────────────────────────── */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ─── LEFT PANEL: USER LIST ────────────────────── */
+        .panel-users {
+            width: 280px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 14px 16px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .user-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .user-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+            position: relative;
+        }
+        .user-item:hover { background: rgba(255,255,255,0.03); }
+        .user-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
+        .user-ip {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-bottom: 3px;
+        }
+        .user-meta {
+            font-size: 0.7rem;
+            color: var(--muted2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* ─── MIDDLE: DETAIL PANEL ─────────────────────── */
+        .panel-detail {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .detail-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+        .detail-header h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .detail-header p {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        /* ─── PROFILE CARD ─────────────────────────────── */
+        .profile-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            flex-shrink: 0;
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .profile-field {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+        .field-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .field-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.78rem;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .field-value.accent { color: var(--accent); }
+        .field-value.blue   { color: var(--blue); }
+        .field-value a { color: var(--blue); text-decoration: none; }
+        .field-value a:hover { text-decoration: underline; }
+
+        /* ─── ACTIVITY LOG TABLE ───────────────────────── */
+        .log-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+        .log-section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(31,47,68,0.6);
+            vertical-align: middle;
+        }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .badge-action {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: rgba(16,185,129,0.1);
+            color: var(--accent);
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        .badge-action.upload  { background: rgba(59,130,246,0.1); color: var(--blue); border-color: rgba(59,130,246,0.2); }
+        .badge-action.battery { background: rgba(245,158,11,0.1); color: var(--yellow); border-color: rgba(245,158,11,0.2); }
+        .battery-bar {
+            width: 60px; height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            display: inline-block;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        .battery-fill { height: 100%; background: var(--accent); }
+        .battery-fill.low { background: var(--danger); }
+        .mono { font-family: 'Fira Code', monospace; color: var(--accent); }
+        .muted { color: var(--muted); }
+
+        /* ─── RIGHT: LIVE CONSOLE LOG ──────────────────── */
+        .panel-console {
+            width: 300px;
+            flex-shrink: 0;
+            background: #060c14;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .console-header {
+            padding: 14px 16px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .console-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+        }
+        .log-entry {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.7rem;
+            color: #4ade80;
+            line-height: 1.7;
+            border-bottom: 1px solid rgba(31,47,68,0.3);
+            padding: 4px 0;
+        }
+        .log-entry .ts { color: #1e40af; }
+        .log-entry .ip { color: #10b981; }
+        .log-entry .act { color: #f59e0b; }
+
+        /* ─── EMPTY ────────────────────────────────────── */
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.875rem;
+        }
+
+        /* ─── SCROLLBAR ────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+    <div class="topbar-brand">
+        <div class="live-dot"></div>
+        RAD TELEMETRY MONITOR
+    </div>
+    <div class="topbar-meta">auto-refresh <span>3s</span> &nbsp;|&nbsp; last update: <span id="last-update">—</span></div>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-label">Total Logs</div>
+        <div class="stat-val green" id="s-total">0</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Unique Users (IP)</div>
+        <div class="stat-val blue" id="s-users">0</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">With Location</div>
+        <div class="stat-val" id="s-loc">0</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">With Battery</div>
+        <div class="stat-val" id="s-bat">0</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Last Seen</div>
+        <div class="stat-val yellow" id="s-last">—</div>
+    </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+    <!-- LEFT: USER LIST -->
+    <div class="panel-users">
+        <div class="panel-header">👤 Daftar User Terdeteksi</div>
+        <div class="user-list" id="user-list">
+            <div class="empty">Menunggu data...</div>
+        </div>
+    </div>
+
+    <!-- MIDDLE: DETAIL -->
+    <div class="panel-detail">
+        <div class="detail-header">
+            <h2 id="detail-title">Pilih user dari panel kiri</h2>
+            <p id="detail-subtitle">Klik salah satu IP untuk melihat profil lengkap dan riwayat aktivitas.</p>
+        </div>
+
+        <div class="profile-section" id="profile-section" style="display:none">
+            <div class="profile-grid" id="profile-grid"></div>
+        </div>
+
+        <div class="log-section">
+            <div class="log-section-title" id="log-title">Riwayat Aktivitas</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Aksi</th>
+                        <th>Lokasi</th>
+                        <th>Baterai</th>
+                        <th>Device</th>
+                    </tr>
+                </thead>
+                <tbody id="detail-table-body">
+                    <tr><td colspan="5" class="empty">Pilih user untuk melihat riwayat.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RIGHT: CONSOLE -->
+    <div class="panel-console">
+        <div class="console-header">
+            <span>📋 Live Event Log</span>
+            <span id="console-count" style="color:var(--accent)">0 events</span>
+        </div>
+        <div class="console-body" id="console-body">
+            <div class="log-entry"><span class="ts">[SYSTEM]</span> Monitor aktif. Menunggu data masuk...</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ─── STATE ────────────────────────────────────────────
+    let allData = [];
+    let selectedIp = null;
+
+    // ─── UA PARSER ─────────────────────────────────────────
+    function parseUA(ua) {
+        if (!ua) return { os: 'Unknown', browser: 'Unknown', device: 'Desktop', icon: '🖥️' };
+        let os = 'Unknown', browser = 'Unknown', device = 'Desktop', icon = '🖥️';
+
+        if (/Android/.test(ua))          { os = 'Android';  device = 'Mobile'; icon = '📱'; }
+        else if (/iPhone|iPad/.test(ua)) { os = 'iOS';      device = 'Mobile'; icon = '📱'; }
+        else if (/Windows/.test(ua))     { os = 'Windows';  device = 'Desktop'; }
+        else if (/Mac OS/.test(ua))      { os = 'macOS';    device = 'Desktop'; icon = '💻'; }
+        else if (/Linux/.test(ua))       { os = 'Linux';    device = 'Desktop'; }
+
+        if (/Edg\//.test(ua))            browser = 'Edge';
+        else if (/Chrome/.test(ua))      browser = 'Chrome';
+        else if (/Firefox/.test(ua))     browser = 'Firefox';
+        else if (/Safari/.test(ua))      browser = 'Safari';
+        else if (/Opera|OPR/.test(ua))   browser = 'Opera';
+
+        return { os, browser, device, icon };
+    }
+
+    // ─── GROUP BY IP ────────────────────────────────────────
+    function groupByIp(data) {
+        const map = {};
+        data.forEach(row => {
+            const ip = row.ip_address || 'Unknown';
+            if (!map[ip]) map[ip] = [];
+            map[ip].push(row);
+        });
+        return map;
+    }
+
+    // ─── RENDER USER LIST ───────────────────────────────────
+    function renderUserList(grouped) {
+        const list = document.getElementById('user-list');
+        const ips = Object.keys(grouped).sort((a, b) => {
+            const la = grouped[a][grouped[a].length - 1].timestamp;
+            const lb = grouped[b][grouped[b].length - 1].timestamp;
+            return lb.localeCompare(la);
+        });
+
+        if (ips.length === 0) {
+            list.innerHTML = '<div class="empty">Belum ada data.</div>';
+            return;
+        }
+
+        list.innerHTML = ips.map(ip => {
+            const logs = grouped[ip];
+            const latest = logs[logs.length - 1];
+            const ua = parseUA(latest.user_agent);
+            const hasLoc = logs.some(l => l.latitude);
+            const active = ip === selectedIp ? 'active' : '';
+
+            return `
+                <div class="user-item ${active}" onclick="selectUser('${ip}')">
+                    <div class="user-ip">${ua.icon} ${ip}</div>
+                    <div class="user-meta">${ua.os} · ${ua.browser}</div>
+                    <div class="user-meta">${latest.timestamp}</div>
+                    <div class="user-badge">${logs.length}</div>
+                    ${hasLoc ? '<div class="user-meta" style="color:#10b981;margin-top:2px">📍 Lokasi Tersedia</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ─── SELECT USER ────────────────────────────────────────
+    function selectUser(ip) {
+        selectedIp = ip;
+        renderUserList(groupByIp(allData));
+        renderDetail(ip, groupByIp(allData)[ip] || []);
+    }
+
+    // ─── RENDER DETAIL ──────────────────────────────────────
+    function renderDetail(ip, logs) {
+        document.getElementById('detail-title').textContent = `Profil User: ${ip}`;
+        document.getElementById('detail-subtitle').textContent = `${logs.length} aktivitas tercatat`;
+        document.getElementById('log-title').textContent = `Riwayat Aktivitas (${logs.length} log)`;
+
+        // Build profile from latest complete data
+        const latest = logs[logs.length - 1];
+        const locLog = [...logs].reverse().find(l => l.latitude);
+        const batLog = [...logs].reverse().find(l => l.battery_level !== null && l.battery_level !== undefined);
+        const ua = parseUA(latest.user_agent);
+
+        // Profile fields
+        const fields = [
+            { label: 'IP Address', value: ip, cls: 'accent' },
+            { label: 'Device Type', value: `${ua.icon} ${ua.device}`, cls: '' },
+            { label: 'Sistem Operasi', value: ua.os, cls: '' },
+            { label: 'Browser', value: ua.browser, cls: '' },
+            { label: 'Total Kunjungan', value: `${logs.length}x`, cls: 'accent' },
+            { label: 'Pertama Terdeteksi', value: logs[0].timestamp, cls: '' },
+            { label: 'Terakhir Aktif', value: latest.timestamp, cls: '' },
+            { label: 'Latitude', value: locLog ? locLog.latitude.toFixed(6) : 'Tidak diizinkan', cls: locLog ? 'accent' : '' },
+            { label: 'Longitude', value: locLog ? locLog.longitude.toFixed(6) : 'Tidak diizinkan', cls: locLog ? 'accent' : '' },
+            { label: 'Google Maps', value: locLog ? `<a href="https://www.google.com/maps?q=${locLog.latitude},${locLog.longitude}" target="_blank">🗺️ Buka Maps</a>` : '—', cls: 'blue', raw: true },
+            { label: 'Baterai', value: batLog ? `${Math.round(batLog.battery_level)}%` : 'N/A', cls: '' },
+            { label: 'Status Charging', value: batLog ? (batLog.is_charging ? '⚡ Sedang Charging' : '🔋 Tidak Charging') : 'N/A', cls: '' },
+        ];
+
+        document.getElementById('profile-section').style.display = 'block';
+        document.getElementById('profile-grid').innerHTML = fields.map(f => `
+            <div class="profile-field">
+                <div class="field-label">${f.label}</div>
+                <div class="field-value ${f.cls || ''}">${f.raw ? f.value : escapeHtml(String(f.value))}</div>
+            </div>
+        `).join('');
+
+        // Activity table — latest first
+        const reversed = [...logs].reverse();
+        document.getElementById('detail-table-body').innerHTML = reversed.map(row => {
+            const locHtml = row.latitude
+                ? `<a href="https://www.google.com/maps?q=${row.latitude},${row.longitude}" target="_blank" style="color:var(--blue);text-decoration:none;">${row.latitude.toFixed(4)}, ${row.longitude.toFixed(4)}</a>`
+                : `<span class="muted">—</span>`;
+
+            let batHtml = '<span class="muted">—</span>';
+            if (row.battery_level !== null && row.battery_level !== undefined) {
+                const lvl = Math.round(row.battery_level);
+                const cls = lvl <= 20 ? 'low' : '';
+                batHtml = `<span style="font-family:'Fira Code',monospace;font-size:0.75rem">${lvl}%${row.is_charging ? ' ⚡' : ''}</span>
+                           <div class="battery-bar"><div class="battery-fill ${cls}" style="width:${lvl}%"></div></div>`;
+            }
+
+            const actionClass = row.action.includes('upload') ? 'upload' : row.action.includes('Battery') ? 'battery' : '';
+
+            return `<tr>
+                <td class="mono" style="font-size:0.7rem;white-space:nowrap">${row.timestamp}</td>
+                <td><span class="badge-action ${actionClass}">${row.action}</span></td>
+                <td>${locHtml}</td>
+                <td>${batHtml}</td>
+                <td style="font-size:0.7rem;color:var(--muted2)">${escapeHtml(parseUA(row.user_agent).os + ' / ' + parseUA(row.user_agent).browser)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ─── RENDER CONSOLE LOG ─────────────────────────────────
+    let prevCount = 0;
+    function updateConsole(data) {
+        if (data.length <= prevCount) return;
+        const newEntries = data.slice(prevCount);
+        const body = document.getElementById('console-body');
+        newEntries.forEach(row => {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="ts">${row.timestamp.split(' ')[1]}</span> <span class="ip">${row.ip_address}</span> → <span class="act">${row.action}</span>`;
+            body.appendChild(entry);
+            body.scrollTop = body.scrollHeight;
+        });
+        prevCount = data.length;
+        document.getElementById('console-count').textContent = `${data.length} events`;
+    }
+
+    // ─── UPDATE STATS ────────────────────────────────────────
+    function updateStats(data) {
+        const grouped = groupByIp(data);
+        document.getElementById('s-total').textContent = data.length;
+        document.getElementById('s-users').textContent = Object.keys(grouped).length;
+        document.getElementById('s-loc').textContent = data.filter(d => d.latitude).length;
+        document.getElementById('s-bat').textContent = data.filter(d => d.battery_level !== null && d.battery_level !== undefined).length;
+        const last = data.length ? data[data.length - 1].timestamp.split(' ')[1] : '—';
+        document.getElementById('s-last').textContent = last;
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    }
+
+    // ─── ESCAPE HTML ────────────────────────────────────────
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;');
+    }
+
+    // ─── MAIN RENDER ────────────────────────────────────────
+    function render(data) {
+        allData = data;
+        const grouped = groupByIp(data);
+
+        updateStats(data);
+        renderUserList(grouped);
+        updateConsole(data);
+
+        // Auto-refresh selected user detail
+        if (selectedIp && grouped[selectedIp]) {
+            renderDetail(selectedIp, grouped[selectedIp]);
+        }
+    }
+
+    // ─── FETCH & POLL ────────────────────────────────────────
+    function fetchData() {
+        fetch('/api/telemetry')
+            .then(r => r.json())
+            .then(data => { if (Array.isArray(data)) render(data); })
+            .catch(() => {});
+    }
+
+    fetchData();
+    setInterval(fetchData, 3000);
+</script>
+
+</body>
+</html>
